@@ -39,6 +39,7 @@ from lightning_utilities.core.overrides import is_overridden
 from torch import Tensor
 from torch.optim import Optimizer
 from torch.utils.data import BatchSampler, DataLoader, DistributedSampler, RandomSampler, SequentialSampler
+from typing_extensions import Unpack
 
 import lightning.fabric
 from lightning.fabric.accelerators.accelerator import Accelerator
@@ -208,13 +209,31 @@ class Fabric:
 
         """
 
+    @overload
+    def setup(
+        self,
+        module: nn.Module,
+        *,
+        move_to_device: bool = ...,
+        _reapply_compile: bool = ...,
+    ) -> _FabricModule: ...
+
+    @overload
+    def setup(
+        self,
+        module: nn.Module,
+        *optimizers: Unpack[Tuple[Optimizer, Unpack[Tuple[Optimizer, ...]]]],
+        move_to_device: bool = ...,
+        _reapply_compile: bool = ...,
+    ) -> Tuple[_FabricModule, Unpack[Tuple[_FabricOptimizer, ...]]]: ...
+
     def setup(
         self,
         module: nn.Module,
         *optimizers: Optimizer,
         move_to_device: bool = True,
         _reapply_compile: bool = True,
-    ) -> Any:  # no specific return because the way we want our API to look does not play well with mypy
+    ) -> Union[_FabricModule, Tuple[_FabricModule, Unpack[Tuple[_FabricOptimizer, ...]]]]:
         r"""Set up a model and its optimizers for accelerated training.
 
         Args:
